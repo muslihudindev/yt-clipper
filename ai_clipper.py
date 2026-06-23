@@ -1189,18 +1189,21 @@ def _apply_overlays(input_video, output_video, top_text, bottom_text, all_overla
             str(output_video)
         ])
     else:
-        # Clean: only explanation text + CTA overlays
-        run([
-            "ffmpeg", "-y",
-            "-i", str(input_video),
-            "-filter_complex",
-            all_overlays,
-            "-map", "0:v",
-            "-map", "0:a?",
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-            "-c:a", "copy",
-            str(output_video)
-        ])
+        # No overlays — just copy the file
+        if all_overlays:
+            run([
+                "ffmpeg", "-y",
+                "-i", str(input_video),
+                "-filter_complex",
+                all_overlays,
+                "-map", "0:v",
+                "-map", "0:a?",
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+                "-c:a", "copy",
+                str(output_video)
+            ])
+        else:
+            shutil.copy(input_video, output_video)
 
 
 def create_clip_package(index, clip, source_video, clips_dir, doodle_path=None, srt_path=None,
