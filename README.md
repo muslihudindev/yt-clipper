@@ -206,6 +206,8 @@ python ai_clipper.py "URL" --tts --gpu
 
 **Voices:** `af_heart` (female), `af_bella` (female), `am_adam` (male), `am_michael` (male)
 
+**Note:** Kokoro doesn't support Indonesian natively. Uses English voice with Indonesian text — will have accent but is understandable.
+
 ## Environment Variables
 
 ```bash

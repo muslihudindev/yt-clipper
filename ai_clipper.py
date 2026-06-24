@@ -179,7 +179,11 @@ def read_title(info_json):
 
 
 def generate_tts(text, output_path, voice="af_heart", speed=1.0, lang_code="a", use_gpu=False):
-    """Generate TTS audio from text using Kokoro."""
+    """Generate TTS audio from text using Kokoro.
+
+    Note: Kokoro doesn't support Indonesian natively. Uses English voice with
+    Indonesian text — will have accent but is understandable.
+    """
     if not KOKORO_AVAILABLE:
         raise RuntimeError("Kokoro not installed. Run: pip install kokoro soundfile")
 
@@ -194,7 +198,8 @@ def generate_tts(text, output_path, voice="af_heart", speed=1.0, lang_code="a", 
         except ImportError:
             pass
 
-    pipeline = KPipeline(lang_code=lang_code, device=device)
+    # Force lang_code='a' (English) since Indonesian isn't supported
+    pipeline = KPipeline(lang_code='a', device=device)
     samples = []
 
     for gs, ps, audio in pipeline(text, voice=voice, speed=speed):
