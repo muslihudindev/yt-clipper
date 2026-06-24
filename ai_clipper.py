@@ -26,6 +26,13 @@ try:
 except ImportError:
     KOKORO_AVAILABLE = False
 
+# Optional: gTTS (free Google TTS with Indonesian support)
+try:
+    from gtts import gTTS
+    GTTS_AVAILABLE = True
+except ImportError:
+    GTTS_AVAILABLE = False
+
 # Optional: OpenCV for face tracking (only needed for --face-track)
 try:
     import cv2
@@ -178,12 +185,32 @@ def read_title(info_json):
         return "youtube-video"
 
 
-def generate_tts(text, output_path, voice="af_heart", speed=1.0, lang_code="a", use_gpu=False):
-    """Generate TTS audio from text using Kokoro.
+def generate_tts(text, output_path, voice="af_heart", speed=1.0, lang_code="a", use_gpu=False, engine="kokoro"):
+    """Generate TTS audio from text.
 
-    Note: Kokoro doesn't support Indonesian natively. Uses English voice with
-    Indonesian text — will have accent but is understandable.
+    Engines:
+    - kokoro: Offline, English voice (accented for Indonesian)
+    - gtts: Online, native Indonesian voice, free, no API key
     """
+    if engine == "gtts":
+        return generate_tts_gtts(text, output_path)
+    else:
+        return generate_tts_kokoro(text, output_path, voice, speed, use_gpu)
+
+
+def generate_tts_gtts(text, output_path):
+    """Generate TTS using Google TTS (free, native Indonesian)."""
+    if not GTTS_AVAILABLE:
+        raise RuntimeError("gTTS not installed. Run: pip install gTTS")
+
+    print(f"[TTS] Using Google TTS (Indonesian)")
+    tts = gTTS(text=text, lang='id', slow=False)
+    tts.save(str(output_path))
+    return output_path
+
+
+def generate_tts_kokoro(text, output_path, voice="af_heart", speed=1.0, use_gpu=False):
+    """Generate TTS using Kokoro (offline, English voice)."""
     if not KOKORO_AVAILABLE:
         raise RuntimeError("Kokoro not installed. Run: pip install kokoro soundfile")
 
@@ -198,7 +225,7 @@ def generate_tts(text, output_path, voice="af_heart", speed=1.0, lang_code="a", 
         except ImportError:
             pass
 
-    # Force lang_code='a' (English) since Indonesian isn't supported
+    print(f"[TTS] Using Kokoro (offline)")
     pipeline = KPipeline(lang_code='a', device=device)
     samples = []
 
@@ -1223,7 +1250,7 @@ def _apply_overlays(input_video, output_video, top_text, bottom_text, all_overla
 
 
 def create_clip_package(index, clip, source_video, clips_dir, doodle_path=None, srt_path=None,
-                       tts_enabled=False, tts_voice="af_heart", tts_speed=1.0, face_track=False, use_gpu=False):
+                       tts_enabled=False, tts_voice="af_heart", tts_speed=1.0, tts_engine="gtts", face_track=False, use_gpu=False):
     clip_dir = clips_dir / f"clip_{index:02d}"
     clip_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1288,7 +1315,7 @@ def create_clip_package(index, clip, source_video, clips_dir, doodle_path=None, 
             mixed_path = clip_dir / "_tmp_mixed.mp4"
 
             try:
-                generate_tts(commentary, tts_path, voice=tts_voice, speed=tts_speed, use_gpu=use_gpu)
+                generate_tts(commentary, tts_path, voice=tts_voice, speed=tts_speed, use_gpu=use_gpu, engine=tts_engine)
 
                 # Extract original audio from final clip
                 orig_audio = clip_dir / "_tmp_orig_audio.aac"
@@ -1447,6 +1474,7 @@ def process_one_url(args, url):
                 tts_enabled=args.tts,
                 tts_voice=args.tts_voice,
                 tts_speed=args.tts_speed,
+                tts_engine=args.tts_engine,
                 face_track=args.face_track,
                 use_gpu=args.gpu,
             )
@@ -1532,8 +1560,9 @@ def main():
     parser.add_argument("--whisper-model", default="small", help="Whisper model: tiny/base/small/medium")
     parser.add_argument("--language", default="auto", help="Whisper language: auto/id/en/etc")
     parser.add_argument("--doodle", default=None, help="Optional transparent PNG doodle overlay")
-    parser.add_argument("--tts", action="store_true", help="Generate TTS voiceover using Kokoro (pip install kokoro soundfile)")
-    parser.add_argument("--tts-voice", default="af_heart", help="Kokoro voice (default: af_heart). Others: af_bella, am_adam, am_michael")
+    parser.add_argument("--tts", action="store_true", help="Enable TTS voiceover")
+    parser.add_argument("--tts-engine", choices=["gtts", "kokoro"], default="gtts", help="TTS engine: gtts (free, Indonesian) or kokoro (offline, English accent)")
+    parser.add_argument("--tts-voice", default="af_heart", help="Kokoro voice (default: af_heart)")
     parser.add_argument("--tts-speed", type=float, default=1.0, help="TTS speech speed (default: 1.0)")
     parser.add_argument("--face-track", action="store_true", help="Use OpenCV face detection for smarter cropping (pip install opencv-python)")
     parser.add_argument("--gpu", action="store_true", help="Use GPU hardware encoding (NVENC/AMF/QSV) when available")
