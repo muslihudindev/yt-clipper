@@ -18,7 +18,7 @@ from pathlib import Path
 from datetime import datetime
 
 from utils import ensure_tool, hhmmss_to_seconds
-from downloader import download_video, read_title
+from downloader import download_video, read_title, extract_audio
 from transcriber import transcribe
 from ai_planner import ask_ollama, ask_chatgpt, ask_openrouter
 from video_processor import create_clip_package
