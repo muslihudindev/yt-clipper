@@ -2,19 +2,15 @@
 
 from utils import run
 
-try:
-    from kokoro import KPipeline
-    import soundfile as sf
-    import numpy as np
-    KOKORO_AVAILABLE = True
-except ImportError:
-    KOKORO_AVAILABLE = False
+# Lazy imports to avoid typer/click version conflicts
+KOKORO_AVAILABLE = False
+GTTS_AVAILABLE = False
 
 try:
     from gtts import gTTS
     GTTS_AVAILABLE = True
 except ImportError:
-    GTTS_AVAILABLE = False
+    pass
 
 
 def generate_tts(text, output_path, voice="af_heart", speed=1.0, use_gpu=False, engine="gtts"):
@@ -42,8 +38,14 @@ def generate_tts_gtts(text, output_path):
 
 def generate_tts_kokoro(text, output_path, voice="af_heart", speed=1.0, use_gpu=False):
     """Generate TTS using Kokoro (offline, English voice)."""
-    if not KOKORO_AVAILABLE:
-        raise RuntimeError("Kokoro not installed. Run: pip install kokoro soundfile")
+    # Lazy import to avoid typer/click version conflicts
+    try:
+        from kokoro import KPipeline
+        import soundfile as sf
+        import numpy as np
+    except ImportError as e:
+        raise RuntimeError(f"Kokoro not installed or has dependency issues: {e}")
+
     device = "cpu"
     if use_gpu:
         try:
