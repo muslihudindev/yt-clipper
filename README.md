@@ -197,10 +197,11 @@ When `--gpu` is enabled:
 When `--tts` is enabled:
 - Generates voiceover from commentary_script
 - Mixes: original at 30% + TTS at 100%
+- Uses GPU when `--gpu` is enabled (~100MB VRAM, 10x faster)
 
 ```bash
 pip install kokoro soundfile numpy
-python ai_clipper.py "URL" --tts --tts-voice af_bella
+python ai_clipper.py "URL" --tts --gpu
 ```
 
 **Voices:** `af_heart` (female), `af_bella` (female), `am_adam` (male), `am_michael` (male)

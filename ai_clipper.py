@@ -178,12 +178,23 @@ def read_title(info_json):
         return "youtube-video"
 
 
-def generate_tts(text, output_path, voice="af_heart", speed=1.0, lang_code="a"):
+def generate_tts(text, output_path, voice="af_heart", speed=1.0, lang_code="a", use_gpu=False):
     """Generate TTS audio from text using Kokoro."""
     if not KOKORO_AVAILABLE:
         raise RuntimeError("Kokoro not installed. Run: pip install kokoro soundfile")
 
-    pipeline = KPipeline(lang_code=lang_code)
+    # Detect device for Kokoro
+    device = "cpu"
+    if use_gpu:
+        try:
+            import torch
+            if torch.cuda.is_available():
+                device = "cuda"
+                print(f"[TTS] Using GPU: {torch.cuda.get_device_name(0)}")
+        except ImportError:
+            pass
+
+    pipeline = KPipeline(lang_code=lang_code, device=device)
     samples = []
 
     for gs, ps, audio in pipeline(text, voice=voice, speed=speed):
@@ -1272,7 +1283,7 @@ def create_clip_package(index, clip, source_video, clips_dir, doodle_path=None, 
             mixed_path = clip_dir / "_tmp_mixed.mp4"
 
             try:
-                generate_tts(commentary, tts_path, voice=tts_voice, speed=tts_speed)
+                generate_tts(commentary, tts_path, voice=tts_voice, speed=tts_speed, use_gpu=use_gpu)
 
                 # Extract original audio from final clip
                 orig_audio = clip_dir / "_tmp_orig_audio.aac"
