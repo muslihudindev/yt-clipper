@@ -337,23 +337,30 @@ def create_clip_package(index, clip, source_video, clips_dir, srt_path=None,
                 print(f"[TTS] Voiceover mixed for clip {index}")
             except Exception as e:
                 print(f"[WARN] TTS failed for clip {index}: {e}")
+                # Cleanup temp files on failure
+                for f in [clip_dir / "_tmp_orig_audio.aac", mixed_path, tts_path, clip_dir / "_tmp_final.mp4"]:
+                    f.unlink(missing_ok=True)
 
-    # Write metadata
-    notes = {
-        "source_start": start,
-        "source_end": end,
-        "hook": clip.get("hook", ""),
-        "title": clip.get("title", ""),
-        "commentary_script": clip.get("commentary_script", ""),
-        "caption": clip.get("caption", ""),
-        "hashtags": clip.get("hashtags", []),
-        "clickbait_top": clip.get("clickbait_top", ""),
-        "clickbait_bottom": clip.get("clickbait_bottom", ""),
-        "tts_enabled": tts_enabled,
-        "file": str(final_clip),
-    }
-    (clip_dir / "notes.json").write_text(json.dumps(notes, indent=2, ensure_ascii=False), encoding="utf-8")
-    (clip_dir / "caption.txt").write_text(f"{notes['caption']}\n\n{' '.join(notes['hashtags'])}\n", encoding="utf-8")
-    (clip_dir / "voiceover_script.txt").write_text(notes["commentary_script"], encoding="utf-8")
+    # Write metadata (always, even if TTS failed)
+    try:
+        notes = {
+            "source_start": start,
+            "source_end": end,
+            "hook": clip.get("hook", ""),
+            "title": clip.get("title", ""),
+            "commentary_script": clip.get("commentary_script", ""),
+            "caption": clip.get("caption", ""),
+            "hashtags": clip.get("hashtags", []),
+            "clickbait_top": clip.get("clickbait_top", ""),
+            "clickbait_bottom": clip.get("clickbait_bottom", ""),
+            "tts_enabled": tts_enabled,
+            "file": str(final_clip),
+        }
+        (clip_dir / "notes.json").write_text(json.dumps(notes, indent=2, ensure_ascii=False), encoding="utf-8")
+        (clip_dir / "caption.txt").write_text(f"{notes['caption']}\n\n{' '.join(notes['hashtags'])}\n", encoding="utf-8")
+        (clip_dir / "voiceover_script.txt").write_text(notes["commentary_script"], encoding="utf-8")
+        print(f"[META] Wrote notes.json, caption.txt, voiceover_script.txt for clip {index}")
+    except Exception as e:
+        print(f"[WARN] Failed to write metadata for clip {index}: {e}")
 
     return final_clip
