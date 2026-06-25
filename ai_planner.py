@@ -149,37 +149,38 @@ def normalize_ai_plan(data, number_of_clips):
 
 
 def build_find_moments_prompt(transcript_text, number_of_clips):
-    """Build Step 1 prompt: find viral moment timestamps."""
-    return f"""Kamu adalah EDITOR SHORT-FORM TIER A untuk konten PODCAST viral (TikTok / Reels / Shorts).
+    """Build Step 1 prompt: find viral moment timestamps with scoring."""
+    return f"""You are an expert short-form video editor trained on millions of high-performing TikTok, Reels, and Shorts.
 
-TUGAS: Dari transcript di bawah, HASILKAN TEPAT {number_of_clips} segment viral.
+TASK: Find {number_of_clips} viral moments from this transcript. Each moment MUST score >70 virality.
 
-KRITERIA CLIP (WAJIB):
-1. DURASI: 15-30 detik SAJA. Tidak boleh lebih.
-2. HOOK: Harus ada kalimat yang bikin orang STOP scroll dalam 3 detik pertama.
-3. EMOSI: Konflik, kontroversi, humor, pengakuan, statement tajam.
-4. PAYOFF: Harus ada ending yang memuaskan (punchline/kesimpulan).
+VIRAL MOMENT DETECTION:
+Analyze for:
+1. STRONG HOOK (0-100): Surprising statement, contrarian opinion, secret revealed, mistake exposed, pain point, controversial claim, shocking statistic, curiosity gap
+2. EMOTIONAL PEAKS (0-100): Excitement, anger, fear, inspiration, humor, tension, surprise
+3. AUDIENCE VALUE (0-100): Actionable advice, frameworks, lessons, personal stories
+4. NARRATIVE COMPLETENESS (0-100): Must have context + main point + conclusion
+5. RETENTION POTENTIAL (0-100): Watch-through, rewatch, share, comment probability
 
-STRONG HOOK RULES:
-- TeXt harus BESAR di layar, pertanyaan, shock value
-- Contoh hook: "Jangan diskip! Rahasia ini bikin...", "GILA! Ternyata...", "DIAM-diam dia..."
-- Hook harus muncul di DETIK PERTAMA video
-- Tanpa hook kuat = TikTok algorithm turunkan reach
+VIRALITY SCORING FORMULA:
+ViralityScore = (0.30 × HookStrength + 0.20 × EmotionalImpact + 0.20 × AudienceValue + 0.15 × RetentionPotential + 0.10 × NarrativeCompleteness)
 
-HINDARI:
-- Obrolan filler, basa-basi
-- Setup terlalu panjang (>5 detik sebelum payung)
-- Clip tanpa payoff/jelas endingnya
+CLIP SELECTION RULES:
+- ONLY select moments with virality_score > 70
+- Hook score > 75
+- Narrative completeness > 65
+- Duration: 15-30 seconds
+- Must include: setup → climax → payoff
+- NEVER cut mid-sentence
 
-ATURAN DURASI (KRITIS):
-- Setiap clip 15-30 detik, TIDAK BOLEH lebih
-- Hitung durasi dari timestamp transcript
-- Jika durasi > 30 detik: PANGKAS bagian tidak relevan
+AVOID:
+- Rambling sections
+- Repeated information
+- Long introductions (>5s before payoff)
+- Dead air, filler, transitions
 
 Return ONLY this JSON:
-{{"moments": [{{"start":"00:00:00","end":"00:00:20","description":"apa yang terjadi","hook_text":"teks hook yang bikin stop scroll","virality_score":8}}]}}
-
-virality_score: 8-10 (kontroversial/emosional kuat), 5-7 (engaging), 1-4 (biasa)
+{{"moments": [{{"start":"00:00:00","end":"00:00:20","description":"apa yang terjadi","hook_text":"teks hook yang bikin stop scroll","virality_score":85,"hook_score":90,"emotion_score":80,"value_score":75,"reasoning":["reason 1","reason 2"]}}]}}
 
 Transcript:
 {transcript_text[:8000]}
@@ -187,37 +188,41 @@ Transcript:
 
 
 def build_clip_metadata_prompt(moment, transcript_text):
-    """Build Step 2 prompt: generate clip metadata."""
-    return f"""Kamu adalah TikTok clip planner. Hasilkan metadata untuk clip ini.
+    """Build Step 2 prompt: generate expert-level clip metadata."""
+    return f"""You are an expert short-form video editor and social media growth specialist.
 
-Momen: {moment.get('start', '00:00:00')} - {moment.get('end', '00:00:20')}
-Deskripsi: {moment.get('description', '')}
-Virality Score: {moment.get('virality_score', 5)}
+Generate metadata for this clip:
+- Start: {moment.get('start', '00:00:00')}
+- End: {moment.get('end', '00:00:20')}
+- Description: {moment.get('description', '')}
+- Virality Score: {moment.get('virality_score', 75)}
+- Hook Score: {moment.get('hook_score', 80)}
 
 Return ONLY this JSON:
-{{"hook":"Teks BESAR yang muncul di detik pertama, bikin STOP scroll, maks 10 kata","title":"Judul HYPERBOLA yang bikin penasaran, max 6 kata","clickbait_top":"2-3 kata SHOCK VALUE","clickbait_bottom":"2-3 kata CTA","commentary_script":"Narasi voiceover 2-3 kalimat pendek","caption":"Caption detail 2-3 kalimat,akhiri dengan pertanyaan","hashtags":["#fyp","#viralindonesia"]}}
+{{"hook":"Opening line that stops scroll in 3 seconds, max 10 words","title":"HYPERBOLA title with shock value, max 6 words","clickbait_top":"2-3 words SHOCK VALUE","clickbait_bottom":"2-3 words CTA","commentary_script":"2-3 sentence voiceover, conversational Indonesian","caption":"Detailed caption 2-3 sentences, ends with question for engagement","hashtags":["#fyp","#viralindonesia"]}}
 
-HOOK RULES (PALING PENTING):
-- Hook = teks besar yang muncul di DETIK PERTAMA
-- Harus bikin orang STOP scroll dalam 3 detik
-- Gunakan: pertanyaan, shock value, angka, kontroversi
-- Contoh: "JANGAN SKIP! Ini rahasia...", "GILA! Ternyata...", "1 hal yang gak diketahui orang"
-- Maks 10 kata, Bahasa Indonesia casual
+HOOK REWRITING RULES:
+- Original: First thing said in the clip
+- Optimized: Stronger version with curiosity gap or pain point
+- Must make viewer STOP scrolling within 3 seconds
+- Examples: "Your business is losing money because..." "Most people don't know this about..."
+
+CAPTION GENERATION (RETENTION OPTIMIZED):
+- Max 6 words per line
+- HIGHLIGHT power words in CAPS
+- HIGHLIGHT numbers
+- HIGHLIGHT emotional phrases
+- Example: "MOST BUSINESSES FAIL" "Because they ignore" "CUSTOMER ACQUISITION"
 
 TITLE RULES (HYPERBOLA):
-- Judul harus HYPERBOLA, bikin penasaran, clickbait-style
-- Gunakan: "GILA!", "PARAH!", "SHOCK!", "GAK NYANGKA!", "ANJIR!"
-- Contoh: "GILA! Dia Ngomong Apa?!?", "PARAH! Ternyata Begini...", "SHOCK! Ketauan Semua"
-- Jangan generic: "Video Viral", "Konteks Penting"
-- Max 6 kata, Bahasa Indonesia casual/slang
+- Must create curiosity gap or shock
+- Use: "GILA!", "PARAH!", "SHOCK!", "GAK NYANGKA!", "ANJIR!"
+- Example: "GILA! Dia Ngomong Apa?!?", "PARAH! Ternyata Begini..."
+- Never generic: "Video Viral", "Konteks Penteng"
 
-CLICKBAIT RULES:
-- clickbait_top: SHOCK VALUE, bikin penasaran (contoh: "PARAH INI", "GAK NYANGKA")
-- clickbait_bottom: CTA singkat (contoh: "LIAT SAMPE AKHIR", "JANGAN SKIP")
-
-CAPTION RULES:
-- Caption = cerita lengkap 2-3 kalimat
-- Akhiri dengan pertanyaan untuk engagement
+PLATFORM OPTIMIZATION:
+- TikTok: Aggressive hook, fast pacing, emotional emphasis
+- Generate caption that works for all platforms
 
 Transcript context:
 {transcript_text[:4000]}
