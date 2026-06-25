@@ -133,9 +133,9 @@ def build_subtitle_filter(srt_path, start_sec, duration):
         srt_escaped = srt_abs.replace("\\", "\\\\").replace(":", "\\:").replace("'", "\\'")
         sub_filter = (
             f"subtitles='{srt_escaped}':"
-            "force_style='FontName=Arial,FontSize=18,PrimaryColour=&H00FFFFFF,"
-            "OutlineColour=&H00000000,BorderStyle=3,Outline=2,Shadow=0,"
-            "Alignment=2,MarginV=60'"
+            "force_style='FontName=Arial,FontSize=14,PrimaryColour=&H00FFFFFF,"
+            "OutlineColour=&H00000000,BorderStyle=3,Outline=1,Shadow=0,"
+            "Alignment=2,MarginV=40'"
         )
         print(f"[SUB] Burning subtitles: {srt_abs}")
         return sub_filter, trimmed_srt

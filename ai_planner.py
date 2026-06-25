@@ -195,7 +195,7 @@ Deskripsi: {moment.get('description', '')}
 Virality Score: {moment.get('virality_score', 5)}
 
 Return ONLY this JSON:
-{{"hook":"Teks BESAR yang muncul di detik pertama, bikin STOP scroll, maks 10 kata","title":"Apa yang terjadi max 6 kata","clickbait_top":"2-3 kata SHOCK VALUE","clickbait_bottom":"2-3 kata CTA","commentary_script":"Narasi voiceover 2-3 kalimat pendek","caption":"Caption detail 2-3 kalimat,akhiri dengan pertanyaan","hashtags":["#fyp","#viralindonesia"]}}
+{{"hook":"Teks BESAR yang muncul di detik pertama, bikin STOP scroll, maks 10 kata","title":"Judul HYPERBOLA yang bikin penasaran, max 6 kata","clickbait_top":"2-3 kata SHOCK VALUE","clickbait_bottom":"2-3 kata CTA","commentary_script":"Narasi voiceover 2-3 kalimat pendek","caption":"Caption detail 2-3 kalimat,akhiri dengan pertanyaan","hashtags":["#fyp","#viralindonesia"]}}
 
 HOOK RULES (PALING PENTING):
 - Hook = teks besar yang muncul di DETIK PERTAMA
@@ -203,6 +203,13 @@ HOOK RULES (PALING PENTING):
 - Gunakan: pertanyaan, shock value, angka, kontroversi
 - Contoh: "JANGAN SKIP! Ini rahasia...", "GILA! Ternyata...", "1 hal yang gak diketahui orang"
 - Maks 10 kata, Bahasa Indonesia casual
+
+TITLE RULES (HYPERBOLA):
+- Judul harus HYPERBOLA, bikin penasaran, clickbait-style
+- Gunakan: "GILA!", "PARAH!", "SHOCK!", "GAK NYANGKA!", "ANJIR!"
+- Contoh: "GILA! Dia Ngomong Apa?!?", "PARAH! Ternyata Begini...", "SHOCK! Ketauan Semua"
+- Jangan generic: "Video Viral", "Konteks Penting"
+- Max 6 kata, Bahasa Indonesia casual/slang
 
 CLICKBAIT RULES:
 - clickbait_top: SHOCK VALUE, bikin penasaran (contoh: "PARAH INI", "GAK NYANGKA")

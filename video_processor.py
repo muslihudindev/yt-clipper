@@ -262,10 +262,9 @@ def create_clip_package(index, clip, source_video, clips_dir, srt_path=None,
                        tts_enabled=False, tts_voice="af_heart", tts_speed=1.0, tts_engine="gtts",
                        face_track=False, use_gpu=False):
     """Create a complete clip package with all overlays."""
-    from tts_engine import generate_tts, mix_audio
-
     clip_dir = clips_dir / f"clip_{index:02d}"
     clip_dir.mkdir(parents=True, exist_ok=True)
+    print(f"[CLIP] Starting clip {index} in {clip_dir}")
 
     start = clip.get("start", "00:00:00")
     end = clip.get("end", "00:00:20")
@@ -280,7 +279,6 @@ def create_clip_package(index, clip, source_video, clips_dir, srt_path=None,
     # Intermediate files
     tmp_vertical = clip_dir / "_tmp_vertical.mp4"
     tmp_titled = clip_dir / "_tmp_titled.mp4"
-    tmp_hooked = clip_dir / "_tmp_hooked.mp4"
     final_clip = clip_dir / "final.mp4"
 
     # Pipeline
@@ -292,17 +290,14 @@ def create_clip_package(index, clip, source_video, clips_dir, srt_path=None,
     if not tmp_titled.exists() or tmp_titled.stat().st_size < 1000:
         raise RuntimeError(f"Titled clip is empty or missing: {tmp_titled}")
 
-    hook_text = clip.get("hook", "") or clip.get("clickbait_top", "") or "JANGAN SKIP!"
-    add_hook_overlay(tmp_titled, tmp_hooked, hook_text)
-
-    add_doodle_overlay(tmp_hooked, final_clip, None, srt_path=srt_path, clip_start=start, duration=duration)
+    # Add subtitles directly (no hook overlay)
+    add_doodle_overlay(tmp_titled, final_clip, None, srt_path=srt_path, clip_start=start, duration=duration)
 
     # Cleanup intermediates
     tmp_vertical.unlink(missing_ok=True)
     tmp_titled.unlink(missing_ok=True)
-    tmp_hooked.unlink(missing_ok=True)
 
-    # TTS voiceover
+    # TTS voiceover (lazy import to avoid dependency issues)
     if tts_enabled:
         commentary = clip.get("commentary_script", "")
         if commentary:
@@ -310,6 +305,7 @@ def create_clip_package(index, clip, source_video, clips_dir, srt_path=None,
             tts_path = clip_dir / "voiceover.wav"
             mixed_path = clip_dir / "_tmp_mixed.mp4"
             try:
+                from tts_engine import generate_tts, mix_audio
                 generate_tts(commentary, tts_path, voice=tts_voice, speed=tts_speed, use_gpu=use_gpu, engine=tts_engine)
                 orig_audio = clip_dir / "_tmp_orig_audio.aac"
                 run([
@@ -337,30 +333,28 @@ def create_clip_package(index, clip, source_video, clips_dir, srt_path=None,
                 print(f"[TTS] Voiceover mixed for clip {index}")
             except Exception as e:
                 print(f"[WARN] TTS failed for clip {index}: {e}")
-                # Cleanup temp files on failure
                 for f in [clip_dir / "_tmp_orig_audio.aac", mixed_path, tts_path, clip_dir / "_tmp_final.mp4"]:
                     f.unlink(missing_ok=True)
 
-    # Write metadata (always, even if TTS failed)
-    try:
-        notes = {
-            "source_start": start,
-            "source_end": end,
-            "hook": clip.get("hook", ""),
-            "title": clip.get("title", ""),
-            "commentary_script": clip.get("commentary_script", ""),
-            "caption": clip.get("caption", ""),
-            "hashtags": clip.get("hashtags", []),
-            "clickbait_top": clip.get("clickbait_top", ""),
-            "clickbait_bottom": clip.get("clickbait_bottom", ""),
-            "tts_enabled": tts_enabled,
-            "file": str(final_clip),
-        }
-        (clip_dir / "notes.json").write_text(json.dumps(notes, indent=2, ensure_ascii=False), encoding="utf-8")
-        (clip_dir / "caption.txt").write_text(f"{notes['caption']}\n\n{' '.join(notes['hashtags'])}\n", encoding="utf-8")
-        (clip_dir / "voiceover_script.txt").write_text(notes["commentary_script"], encoding="utf-8")
-        print(f"[META] Wrote notes.json, caption.txt, voiceover_script.txt for clip {index}")
-    except Exception as e:
-        print(f"[WARN] Failed to write metadata for clip {index}: {e}")
+    # Write metadata (always)
+    notes = {
+        "source_start": start,
+        "source_end": end,
+        "hook": clip.get("hook", ""),
+        "title": clip.get("title", ""),
+        "commentary_script": clip.get("commentary_script", ""),
+        "caption": clip.get("caption", ""),
+        "hashtags": clip.get("hashtags", []),
+        "clickbait_top": clip.get("clickbait_top", ""),
+        "clickbait_bottom": clip.get("clickbait_bottom", ""),
+        "tts_enabled": tts_enabled,
+        "file": str(final_clip),
+    }
+    (clip_dir / "notes.json").write_text(json.dumps(notes, indent=2, ensure_ascii=False), encoding="utf-8")
+    (clip_dir / "caption.txt").write_text(f"{notes['caption']}\n\n{' '.join(notes['hashtags'])}\n", encoding="utf-8")
+    (clip_dir / "voiceover_script.txt").write_text(notes["commentary_script"], encoding="utf-8")
+    print(f"[META] Wrote notes.json, caption.txt, voiceover_script.txt for clip {index}")
+
+    return final_clip
 
     return final_clip
