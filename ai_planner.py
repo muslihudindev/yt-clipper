@@ -188,43 +188,39 @@ Transcript:
 
 
 def build_clip_metadata_prompt(moment, transcript_text):
-    """Build Step 2 prompt: generate expert-level clip metadata."""
-    return f"""You are an expert short-form video editor and social media growth specialist.
+    """Build Step 2 prompt: generate specific, content-grounded metadata."""
+    return f"""You are an expert short-form video editor. Generate metadata that SPECIFICALLY describes what happens in this clip.
 
-Generate metadata for this clip:
+CLIP CONTEXT:
 - Start: {moment.get('start', '00:00:00')}
 - End: {moment.get('end', '00:00:20')}
-- Description: {moment.get('description', '')}
+- What happens: {moment.get('description', '')}
 - Virality Score: {moment.get('virality_score', 75)}
-- Hook Score: {moment.get('hook_score', 80)}
 
 Return ONLY this JSON:
-{{"hook":"Opening line that stops scroll in 3 seconds, max 10 words","title":"HYPERBOLA title with shock value, max 6 words","clickbait_top":"2-3 words SHOCK VALUE","clickbait_bottom":"2-3 words CTA","commentary_script":"2-3 sentence voiceover, conversational Indonesian","caption":"Detailed caption 2-3 sentences, ends with question for engagement","hashtags":["#fyp","#viralindonesia"]}}
+{{"hook":"Opening line from the clip (what was actually said), max 10 words","title":"What SPECIFICALLY happens in this clip, max 6 words","clickbait_top":"2-3 words about the specific moment","clickbait_bottom":"2-3 words CTA","commentary_script":"2-3 sentence voiceover summarizing this specific moment","caption":"What happens in this clip + why it matters, 2-3 sentences","hashtags":["#fyp","#viralindonesia"]}}
 
-HOOK REWRITING RULES:
-- Original: First thing said in the clip
-- Optimized: Stronger version with curiosity gap or pain point
-- Must make viewer STOP scrolling within 3 seconds
-- Examples: "Your business is losing money because..." "Most people don't know this about..."
+TITLE RULES (CRITICAL - MUST BE SPECIFIC):
+- Title = what ACTUALLY happens in this specific clip
+- NOT generic clickbait. DESCRIBE THE MOMENT.
+- BAD: "GILA! Video Viral!!!" (generic)
+- GOOD: "Guru Marah Besar di Kelas" (describes what happens)
+- GOOD: "Dia Ngaku Salah di Depan Semua" (describes the moment)
+- GOOD: "Netizen Debat Keras Soal Ini" (describes the reaction)
+- Match the title to the transcript content
 
-CAPTION GENERATION (RETENTION OPTIMIZED):
-- Max 6 words per line
-- HIGHLIGHT power words in CAPS
-- HIGHLIGHT numbers
-- HIGHLIGHT emotional phrases
-- Example: "MOST BUSINESSES FAIL" "Because they ignore" "CUSTOMER ACQUISITION"
+HOOK RULES:
+- Hook = what was actually said at the start of the clip
+- Use the speaker's actual words or a summary
+- Must be specific to this moment, not generic
 
-TITLE RULES (HYPERBOLA):
-- Must create curiosity gap or shock
-- Use: "GILA!", "PARAH!", "SHOCK!", "GAK NYANGKA!", "ANJIR!"
-- Example: "GILA! Dia Ngomong Apa?!?", "PARAH! Ternyata Begini..."
-- Never generic: "Video Viral", "Konteks Penteng"
+CAPTION RULES:
+- Describe what happens in the clip (specific moment)
+- Explain why it matters or why it went viral
+- End with a question for engagement
+- Example: "Guru ini marah besar karena siswa ketiduran. Tapi alasannya bikin netizen debat. Lo setuju?"
 
-PLATFORM OPTIMIZATION:
-- TikTok: Aggressive hook, fast pacing, emotional emphasis
-- Generate caption that works for all platforms
-
-Transcript context:
+TRANSCRIPT EXCERPT (for context):
 {transcript_text[:4000]}
 """
 
