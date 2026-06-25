@@ -1,5 +1,6 @@
 """Video processing: vertical crop, face tracking, GPU encoding, overlays."""
 
+import json
 import shutil
 import subprocess
 from pathlib import Path
