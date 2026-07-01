@@ -89,9 +89,24 @@ def normalize_clip(clip, index):
         end = "00:00:20"
 
     hook = clip.get("hook") or clip.get("tiktok_hook") or "JANGAN SKIP!"
-    title = clip.get("title") or clip.get("on_screen_title") or "Konteks Video Viral"
+    title = clip.get("title") or clip.get("on_screen_title") or None
+    # If title is generic/unhelpful, don't use it as fallback
+    if title and title.lower() in ("konteks video viral", "viral!!!", "parah banget", "gila!", "wajib tonton"):
+        title = None
 
     commentary_script = clip.get("commentary_script") or clip.get("script") or ""
+
+    # Generate fallback title from hook if no good title provided
+    if not title:
+        if hook and hook != "JANGAN SKIP!":
+            # Use first few words of hook as title
+            words = hook.split()[:6]
+            title = " ".join(words)
+        elif fallback_text:
+            words = fallback_text.split()[:6]
+            title = " ".join(words)
+        else:
+            title = "Momen Penting Ini"
     if not commentary_script:
         if fallback_text:
             commentary_script = f"Video ini lagi rame, {fallback_text}"
@@ -200,14 +215,29 @@ CLIP CONTEXT:
 Return ONLY this JSON:
 {{"hook":"Opening line from the clip (what was actually said), max 10 words","title":"What SPECIFICALLY happens in this clip, max 6 words","clickbait_top":"2-3 words about the specific moment","clickbait_bottom":"2-3 words CTA","commentary_script":"2-3 sentence voiceover summarizing this specific moment","caption":"What happens in this clip + why it matters, 2-3 sentences","hashtags":["#fyp","#viralindonesia"]}}
 
-TITLE RULES (CRITICAL - MUST BE SPECIFIC):
-- Title = what ACTUALLY happens in this specific clip
-- NOT generic clickbait. DESCRIBE THE MOMENT.
-- BAD: "GILA! Video Viral!!!" (generic)
-- GOOD: "Guru Marah Besar di Kelas" (describes what happens)
-- GOOD: "Dia Ngaku Salah di Depan Semua" (describes the moment)
-- GOOD: "Netizen Debat Keras Soal Ini" (describes the reaction)
-- Match the title to the transcript content
+TITLE RULES (CRITICAL - MUST BE IN BAHASA INDONESIA):
+- Title = apa yang SEBENARNYA terjadi di klip ini (bukan clickbait umum)
+- Gunakan bahasa Indonesia yang natural dan conversational
+- Title harus DESKRIPSI SPESIFIK dari momen, bukan klaim generik
+- Title harus SINGKAT: maksimal 5-7 kata
+- Title harus bikin orang penasaran tapi JUJUR
+
+CONTOH TITLE YANG BAGUS:
+- "Guru Marah Besar di Kelas" (apa yang terjadi)
+- "Dia Ngaku Salah di Depan Semua" (momen spesifik)
+- "Netizen Debat Keras Soal Ini" (reaksi)
+- "Dia Bilang Gak Mau Kerja Lagi" (dialog penting)
+- "Anak Kecil Ngomong Begini ke Guru" (situasi)
+- "Reaksi Orang Tua Setelah Denger Itu" (konsekuensi)
+
+CONTOH TITLE YANG BURUK (JANGAN PAKAI):
+- "GILA! Video Viral!!!" (terlalu generik)
+- "Wajib Tonton!" (clickbait kosong)
+- "Konteks Video Viral" (gak deskripsikan apapun)
+- "Parah Banget" (gak jelas parah apanya)
+- "Viral di TikTok" (bukan judul, tapi fakta)
+
+RULE: Title HARUS menjawab "apa yang terjadi di klip ini?" secara spesifik.
 
 HOOK RULES:
 - Hook = what was actually said at the start of the clip
